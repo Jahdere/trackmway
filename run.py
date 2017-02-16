@@ -47,6 +47,7 @@ if __name__ == '__main__':
         if next_tram <= 0:
             if next_tram == 0:
                 playAudio()
+                time.sleep(60) # Give 1mn to the trawmay for leaving !
 
             trams = getTrams()
 
@@ -54,6 +55,9 @@ if __name__ == '__main__':
             if len(trams) == 0:
                 print 'End of service'
                 break
+
+            if len(trams) == 1:
+                print 'Care, last tramway !'
 
             # Here tram is coming, switch to the next
             next_tram = int(trams[0])
