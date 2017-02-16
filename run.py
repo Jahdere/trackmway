@@ -1,20 +1,20 @@
 import httplib
-from bs4 import BeautifulSoup
+import json
 import datetime
 import time
 import pygame as pg
 
 def getTrams():
     trams = []
-    client = httplib.HTTPConnection('www.ratp.fr')
-    client.request('GET', '/horaires/fr/ratp/tramway/prochains_passages/PP/T3b/Marie+de+Miribel/A');
-    body = BeautifulSoup(client.getresponse().read(), 'html.parser')
-    client.close();
-    table = body.find('div', {'id': 'prochains_passages'}).find('table')
-    for ligne in table.find_all('tr'):
-        for idx,td in enumerate(ligne.find_all('td')):
-            if idx == 1:
-                trams.append(td.text.split(' ')[0])
+    client = httplib.HTTPSConnection('citymapper.com')
+    client.request('GET', '/api/1/metrodepartures?headways=1&ids=ParisStation_Marie_de_Miribel&region_id=fr-paris');
+    data = json.loads(client.getresponse().read())
+
+    try:
+        for departure in data['stations'][0]['sections'][0]['departure_groupings'][1]['departures']:
+            trams.append(departure['time_seconds'])
+    except Exception, e:
+        print 'No tramways found'
 
     return trams
 
@@ -42,16 +42,21 @@ def playAudio():
 
 if __name__ == '__main__':
     next_tram = -1
+
     while True:
         if next_tram <= 0:
             if next_tram == 0:
                 playAudio()
 
             trams = getTrams()
-            if (len(trams) == 0):
+
+            # If no trams or the last tram is
+            if len(trams) == 0:
                 print 'End of service'
                 break
-            next_tram = int(trams[0]) * 60
+
+            # Here tram is coming, switch to the next
+            next_tram = int(trams[0])
 
         m, s = divmod(next_tram, 60)
         print "%02d:%02d" % (m, s)
